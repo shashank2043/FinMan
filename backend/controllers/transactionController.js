@@ -14,19 +14,46 @@ export const addTransactionController = async (req, res) => {
       transactionType,
     } = req.body;
 
-    // console.log(title, amount, description, date, category, userId, transactionType);
-
-    if (
-      !title ||
-      !amount ||
-      !description ||
-      !date ||
-      !category ||
-      !transactionType
-    ) {
-      return res.status(408).json({
+    // Enhanced input validation
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+      return res.status(400).json({
         success: false,
-        messages: "Please Fill all fields",
+        message: "Title must be a non-empty string"
+      });
+    }
+
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount must be a positive number"
+      });
+    }
+
+    if (!date || !moment(date).isValid()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid date"
+      });
+    }
+
+    if (!category || typeof category !== 'string' || category.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Category must be a non-empty string"
+      });
+    }
+
+    if (!transactionType || !['credit', 'expense'].includes(transactionType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Transaction type must be either 'credit' or 'expense'"
+      });
+    }
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required"
       });
     }
 
@@ -35,10 +62,9 @@ export const addTransactionController = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "User not found",
+        message: "User not found"
       });
     }
-
     let newTransaction = await Transaction.create({
       title: title,
       amount: amount,
@@ -69,18 +95,22 @@ export const getAllTransactionController = async (req, res) => {
   try {
     const { userId, type, frequency, startDate, endDate } = req.body;
 
-    console.log(userId, type, frequency, startDate, endDate);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required"
+      });
+    }
 
     const user = await User.findById(userId);
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "User not found",
+        message: "User not found"
       });
     }
 
-    // Create a query object with the user and type conditions
     const query = {
       user: userId,
     };
@@ -89,36 +119,116 @@ export const getAllTransactionController = async (req, res) => {
       query.transactionType = type;
     }
 
-    // Add date conditions based on 'frequency' and 'custom' range
-    if (frequency !== 'custom') {
+    if (frequency === 'custom' && startDate && endDate) {
       query.date = {
-        $gt: moment().subtract(Number(frequency), "days").toDate()
+        $gte: moment(startDate).startOf('day').toDate(),
+        $lte: moment(endDate).endOf('day').toDate()
       };
-    } else if (startDate && endDate) {
+    } else if (frequency !== 'custom') {
       query.date = {
-        $gte: moment(startDate).toDate(),
-        $lte: moment(endDate).toDate(),
+        $gt: moment().subtract(Number(frequency) || 7, "days").startOf('day').toDate()
       };
     }
 
-    // console.log(query);
-
-    const transactions = await Transaction.find(query);
-    //select * from transaction where date>18/02/2025
-    // console.log(transactions);
+    const transactions = await Transaction.find(query).sort({ date: -1 });
 
     return res.status(200).json({
       success: true,
-      transactions: transactions,
+      transactions,
     });
   } catch (err) {
-    return res.status(401).json({
+    console.error('Transaction fetch error:', err);
+    return res.status(500).json({
       success: false,
-      messages: err.message,
+      message: "Error fetching transactions. Please try again."
     });
   }
 };
 
+export const deleteMultipleTransactionsController = async (req, res) => {
+  try {
+    const { transactionIds, userId } = req.body;
+
+    if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide valid transaction IDs"
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    const deletedTransactions = await Transaction.deleteMany({
+      _id: { $in: transactionIds },
+      user: userId
+    });
+
+    if (deletedTransactions.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No transactions found to delete"
+      });
+    }
+
+    // Update user's transactions array
+    user.transactions = user.transactions.filter(
+      transaction => !transactionIds.includes(transaction._id.toString())
+    );
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully deleted ${deletedTransactions.deletedCount} transactions`
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+export const getSingleTransactionController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+
+    if (!id || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Transaction ID and User ID are required"
+      });
+    }
+
+    const transaction = await Transaction.findOne({
+      _id: id,
+      user: userId
+    });
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      transaction
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
 
 export const deleteTransactionController = async (req, res) => {
   try {

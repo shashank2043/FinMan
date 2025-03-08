@@ -71,9 +71,9 @@ const Home = () => {
   const [values, setValues] = useState({
     title: "",
     amount: "",
-    description: "",
-    category: "",
-    date: "",
+    description: "optional",
+    category: "Choose...",
+    date: new Date().toISOString().split("T")[0],
     transactionType: "",
   });
 
@@ -94,40 +94,54 @@ const Home = () => {
 
     const { title, amount, description, category, date, transactionType } =
       values;
-
     if (
       !title ||
       !amount ||
-      !description ||
       !category ||
       !date ||
-      !transactionType
+      !transactionType ||
+      category === "Choose..."
     ) {
-      toast.error("Please enter all the fields", toastOptions);
-    }
-    setLoading(true);
-
-    const { data } = await axios.post(addTransaction, {
-      title: title,
-      amount: amount,
-      description: description,
-      category: category,
-      date: date,
-      transactionType: transactionType,
-      userId: cUser._id,
-    });
-
-    if (data.success === true) {
-      toast.success(data.message, toastOptions);
-      handleClose();
-      setRefresh(!refresh);
-    } else {
-      toast.error(data.message, toastOptions);
+      toast.error("Please Fill all fields", toastOptions);
+      return;
     }
 
-    setLoading(false);
+    try {
+      setLoading(true);
+      const { data } = await axios.post(addTransaction, {
+        title,
+        amount,
+        description,
+        category,
+        date,
+        transactionType,
+        userId: cUser._id,
+      });
+
+      if (data.success === true) {
+        toast.success(data.message, toastOptions);
+        handleClose();
+        setRefresh(!refresh);
+        setValues({
+          title: "",
+          amount: "",
+          description: "",
+          category: "",
+          date: "",
+          transactionType: "",
+        });
+      } else {
+        toast.error(data.message || "Error adding transaction", toastOptions);
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Error adding transaction. Please try again.";
+      toast.error(errorMessage, toastOptions);
+    } finally {
+      setLoading(false);
+    }
   };
-
   const handleReset = () => {
     setType("all");
     setStartDate(null);
@@ -135,12 +149,7 @@ const Home = () => {
     setFrequency("7");
   };
 
-
-  
-
-
   useEffect(() => {
-
     const fetchAllTransactions = async () => {
       try {
         setLoading(true);
@@ -153,9 +162,9 @@ const Home = () => {
           type: type,
         });
         console.log(data);
-  
+
         setTransactions(data.transactions);
-  
+
         setLoading(false);
       } catch (err) {
         // toast.error("Error please Try again...", toastOptions);
@@ -185,7 +194,11 @@ const Home = () => {
       ) : (
         <>
           <Container
-            style={{ position: "relative", zIndex: "2 !important", backgroundColor:'black'  }}
+            style={{
+              position: "relative",
+              zIndex: "2 !important",
+              backgroundColor: "black",
+            }}
             className="mt-3"
           >
             <div className="filterRow">
@@ -238,8 +251,23 @@ const Home = () => {
               </div>
 
               <div>
-                <Button onClick={handleShow} className="addNew">
-                  Add New
+                <Button
+                  onClick={() => {
+                    setShow(true);
+                    setValues({ ...values, transactionType: "credit" });
+                  }}
+                  className="addNew credit-btn"
+                >
+                  Add Credit
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShow(true);
+                    setValues({ ...values, transactionType: "expense" });
+                  }}
+                  className="addNew debit-btn"
+                >
+                  Add Debit
                 </Button>
                 <Button onClick={handleShow} className="mobileBtn">
                   +
@@ -256,7 +284,7 @@ const Home = () => {
                           name="title"
                           type="text"
                           placeholder="Enter Transaction Name"
-                          value={values.name}
+                          value={values.title}
                           onChange={handleChange}
                         />
                       </Form.Group>
@@ -302,19 +330,6 @@ const Home = () => {
                           value={values.description}
                           onChange={handleChange}
                         />
-                      </Form.Group>
-
-                      <Form.Group className="mb-3" controlId="formSelect1">
-                        <Form.Label>Transaction Type</Form.Label>
-                        <Form.Select
-                          name="transactionType"
-                          value={values.transactionType}
-                          onChange={handleChange}
-                        >
-                          <option value="">Choose...</option>
-                          <option value="credit">Credit</option>
-                          <option value="expense">Expense</option>
-                        </Form.Select>
                       </Form.Group>
 
                       <Form.Group className="mb-3" controlId="formDate">

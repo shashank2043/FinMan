@@ -1,36 +1,52 @@
-.filterRow{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px;
-
+.filterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+}
+.credit-btn {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  margin-right: 10px;
 }
 
+.debit-btn {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+}
+
+.credit-btn:hover {
+  background-color: #218838 !important;
+  border-color: #218838 !important;
+}
+
+.debit-btn:hover {
+  background-color: #c82333 !important;
+  border-color: #c82333 !important;
+}
 .data-table {
-    border-collapse: collapse;
-  }
-  
+  border-collapse: collapse;
+}
+
 .data-table thead th {
-    background-color: #f5f5f5;
+  background-color: #f5f5f5;
+}
+.icons-handle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 15px;
+  /* width: 100%; */
+}
+.date {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.icons-handle{
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 15px;
-    /* width: 100%; */
-}
-
-.date{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-  
 /* .data-table tbody tr:hover {
     background-color: #f5f5f5;
     cursor: pointer;
@@ -39,77 +55,51 @@
 .data-table tbody tr:nth-child(even) {
     background-color: #f8f8f8;
 } */
+.containerBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  width: 100%;
+  margin-left: 20px;
+}
+.mobileBtn {
+  display: none !important;
+}
+.iconBtnBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  border: 2px solid white;
+  border-radius: 8px;
+}
 
-.containerBtn{
-    display: flex;
-    align-items: center;
-    justify-content:center;
-    margin-bottom: 20px;
+@media screen and (max-width: 768px) {
+  .filterRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+    padding: 15px;
+  }
+  .filterRow > div {
     width: 100%;
-    margin-left: 20px;
-}
-.mobileBtn{
-    display: none !important;
-}
-
-.iconBtnBox{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px;
-    border: 2px solid white;
-    border-radius: 8px;
-    
-
-}
-
-.iconActive{
-    background-color: white;
-    color: black;
-}
-.iconDeactive{
-    background-color: rgb(78, 74, 78);
-    color: black;
-}
-
-@media only screen and (max-width: 600px) {
-    .filterRow {
-        padding: 0px !important;
-        margin-top: 0px !important;
-        display: flex;
-        gap: "5px";
-        
-    }
-    .addNew{
-        /* padding-top: 20px; */
-        display: none !important;
-    }
-    .mobileBtn{
-        display: inline-block !important;
-    }
-    .iconBtnBox{
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 0px;
-        
-    }
-    
-    .date{
-        /* padding: 10px; */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: "10px";
-        flex-direction: column;
-        margin-bottom: 10px;
-    }
-    .date .form-group{
-        width: 45%;
-    }
-
-    .containerBtn{
-        margin-left: 0px !important;
-    }
+  }
+  .filterRow .form-group {
+    margin-bottom: 10px;
+  }
+  .date {
+    flex-direction: column;
+    width: 100%;
+  }
+  .date .form-group {
+    width: 100%;
+  }
+  .date .form-group {
+    width: 45%;
+  }
+  .containerBtn {
+    margin-left: 0px !important;
+  }
 }
