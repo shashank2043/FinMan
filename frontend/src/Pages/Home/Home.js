@@ -110,7 +110,7 @@ const Home = () => {
       setLoading(true);
       const { data } = await axios.post(addTransaction, {
         title,
-        amount,
+        amount: parseFloat(amount),
         description,
         category,
         date,
@@ -152,28 +152,38 @@ const Home = () => {
   useEffect(() => {
     const fetchAllTransactions = async () => {
       try {
+        if (!cUser?._id) return;
+
         setLoading(true);
-        console.log(cUser._id, frequency, startDate, endDate, type);
-        const { data } = await axios.post(getTransactions, {
+        const payload = {
           userId: cUser._id,
-          frequency: frequency,
-          startDate: startDate,
-          endDate: endDate,
-          type: type,
-        });
-        console.log(data);
+          frequency,
+          type,
+        };
 
+        if (frequency === "custom") {
+          if (!startDate || !endDate) {
+            toast.error(
+              "Please select both start and end dates for custom range"
+            );
+            setLoading(false);
+            return;
+          }
+          payload.startDate = startDate;
+          payload.endDate = endDate;
+        }
+
+        const { data } = await axios.post(getTransactions, payload);
         setTransactions(data.transactions);
-
-        setLoading(false);
       } catch (err) {
-        // toast.error("Error please Try again...", toastOptions);
+        toast.error("Error fetching transactions. Please try again.");
+      } finally {
         setLoading(false);
       }
     };
 
     fetchAllTransactions();
-  }, [refresh, frequency, endDate, type, startDate]);
+  }, [cUser?._id, refresh, frequency, type, startDate, endDate]);
 
   const handleTableClick = (e) => {
     setView("table");
@@ -227,7 +237,7 @@ const Home = () => {
                     onChange={handleSetType}
                   >
                     <option value="all">All</option>
-                    <option value="expense">Expense</option>
+                    <option value="debit">Expense</option>
                     <option value="credit">Income</option>
                   </Form.Select>
                 </Form.Group>
@@ -263,7 +273,7 @@ const Home = () => {
                 <Button
                   onClick={() => {
                     setShow(true);
-                    setValues({ ...values, transactionType: "expense" });
+                    setValues({ ...values, transactionType: "debit" });
                   }}
                   className="addNew debit-btn"
                 >
